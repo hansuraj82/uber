@@ -63,13 +63,11 @@ const getUserProfile = (req,res,next) => {
 
 const logoutProfile = async(req,res) => {
     res.clearCookie('token');
-    console.log('req.cookie', req.cookies.token)
     const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
     if(!token) {
         return res.status(401).json({msg: "unauthorized user"})
     }
-    console.log('token in logout is after clearence ',token);
-
+    
     const blacklistedToken = await BlacklistedToken.findOne({token: token});
     if(blacklistedToken) {
         return res.status(401).json({msg: 'Token expired'})

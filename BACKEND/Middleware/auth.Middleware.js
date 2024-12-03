@@ -9,7 +9,6 @@ const authUser = async (req,res,next) => {
         
         return res.status(401).json({msg: "Token Expired"})
     }
-    console.log('token is ',token)
     if(!token) {
         return res.status(401).json({msg: "unauthorized user"});
     }
