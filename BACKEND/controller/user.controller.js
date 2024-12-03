@@ -1,3 +1,4 @@
+const BlacklistedToken = require('../models/blacklistedToken.model');
 const userModel = require('../models/user.model');
 const userService = require('../services/user.services');
 const {validationResult} = require('express-validator');
@@ -19,7 +20,6 @@ const registerUser = async (req,res,next) => {
         email, 
         password: hashedPassword
     });
-    const token = await user.generateAuthToken();
 
     res.status(201).json({token,user});
 }
@@ -46,6 +46,8 @@ const loginUser = async (req,res,next) => {
 
         const token = user.generateAuthToken();
         
+        res.cookie('token',token);
+
         return res.status(200).json({token,user});
 
     } catch (error) {
@@ -54,9 +56,33 @@ const loginUser = async (req,res,next) => {
 }
 
 
+const getUserProfile = (req,res,next) => {
+    return res.status(200).json(req.user);
+}
+
+
+const logoutProfile = async(req,res) => {
+    res.clearCookie('token');
+    console.log('req.cookie', req.cookies.token)
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    if(!token) {
+        return res.status(401).json({msg: "unauthorized user"})
+    }
+    console.log('token in logout is after clearence ',token);
+
+    const blacklistedToken = await BlacklistedToken.findOne({token: token});
+    if(blacklistedToken) {
+        return res.status(401).json({msg: 'Token expired'})
+    }
+
+    await BlacklistedToken.create({token});
+
+    res.status(200).json({msg: 'user Logged out successfully'});
+}
 
 
 
 
 
-module.exports = {registerUser,loginUser};
+
+module.exports = {registerUser,loginUser,getUserProfile,logoutProfile};
